@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 FootballPaul 是一个基于 Go 的足球比赛预测与积分系统，用户预测比赛比分并根据准确程度获得积分。
 
-**技术栈**: Go 1.21+, Gin Web 框架, GORM ORM, SQLite, JWT 认证。
+**技术栈**: Go 1.21+, Gin Web 框架, GORM ORM, SQLite, JWT 认证, React + Vite + TailwindCSS。
 
 ## 常用命令
 
@@ -14,13 +14,15 @@ FootballPaul 是一个基于 Go 的足球比赛预测与积分系统，用户预
 # 安装依赖
 go mod download
 go mod tidy
+cd frontend && npm install
 
-# 开发运行（使用 air 热重载）
-go run main.go
+# 开发运行（后端使用 air 热重载）
 air
+cd frontend && npm run dev
 
 # 生产构建
 go build -o bin/footballpaul main.go
+cd frontend && npm run build
 
 # 运行测试
 go test ./...
@@ -29,8 +31,56 @@ go test ./...
 go test -cover ./...
 
 # 运行特定包的测试
-go test ./services
+go test ./utils
+go test ./models
+go test ./middleware
+go test ./handlers
 go test -v ./...
+
+# 运行测试（覆盖单个文件）
+go test -v ./utils/scoring_test.go
+```
+
+## 项目结构
+
+```
+footballPaul/
+├── main.go                    # 程序入口
+├── router/router.go           # 所有路由定义
+├── handlers/                  # HTTP 请求处理层
+│   ├── user_handler.go
+│   ├── match_handler.go
+│   ├── prediction_handler.go
+│   ├── leaderboard_handler.go
+│   └── competition_handler.go
+├── services/                  # 业务逻辑层
+│   ├── user_service.go
+│   ├── match_service.go
+│   ├── prediction_service.go
+│   ├── leaderboard_service.go
+│   └── competition_service.go
+├── models/                    # 数据模型层
+│   ├── user.go
+│   ├── match.go
+│   ├── prediction.go
+│   ├── competition.go
+│   └── scoring_rule.go
+├── middleware/                 # 中间件
+│   ├── auth.go                # JWT 认证
+│   └── cors.go
+├── config/                     # 配置管理
+│   └── config.go
+├── database/                   # 数据库连接和迁移
+│   └── database.go
+├── utils/                      # 工具函数
+│   └── scoring.go             # 积分计算逻辑
+└── frontend/                   # React 前端
+    ├── src/
+    │   ├── pages/             # 页面组件
+    │   ├── components/        # 可复用组件
+    │   ├── context/           # React Context
+    │   └── api/               # API 客户端
+    └── package.json
 ```
 
 ## 架构
@@ -48,6 +98,20 @@ go test -v ./...
 **认证**: 基于 JWT（`middleware/auth.go`）。受保护的路由使用 `middleware.AuthMiddleware(cfg)`。
 
 **配置**: 通过 `config/config.go` 读取环境变量 - DB_DSN（数据库路径）, SERVER_PORT, JWT_SECRET。
+
+## 测试
+
+本项目使用 Go 标准 `testing` 包，配合 `testify/assert` 做断言。
+
+**测试原则**:
+- `utils/` - 纯函数，优先写单元测试（如 `scoring.go`）
+- `models/` - 测试模型方法和序列化（如 `ToResponse()`）
+- `middleware/` - 使用 `httptest` 测试 gin 中间件行为
+- `handlers/` - 测试路由结构和请求/响应处理
+- `services/` - 数据库依赖较重，可通过 mock 或 integration test 覆盖
+- `config/` - 测试配置加载和环境变量覆盖
+
+**测试文件命名**: `*_test.go`，与被测文件同包同目录。
 
 ## 积分规则
 
