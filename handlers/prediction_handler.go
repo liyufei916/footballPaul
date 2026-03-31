@@ -35,8 +35,8 @@ func (h *PredictionHandler) CreatePrediction(c *gin.Context) {
 	prediction, err := h.predictionService.CreatePrediction(
 		userID.(uint),
 		req.MatchID,
-		req.PredictedHomeScore,
-		req.PredictedAwayScore,
+		*req.PredictedHomeScore,
+		*req.PredictedAwayScore,
 	)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -73,8 +73,8 @@ func (h *PredictionHandler) UpdatePrediction(c *gin.Context) {
 	prediction, err := h.predictionService.UpdatePrediction(
 		uint(id),
 		userID.(uint),
-		req.PredictedHomeScore,
-		req.PredictedAwayScore,
+		*req.PredictedHomeScore,
+		*req.PredictedAwayScore,
 	)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

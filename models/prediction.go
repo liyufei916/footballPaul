@@ -22,8 +22,8 @@ type Prediction struct {
 
 type PredictionRequest struct {
 	MatchID            uint `json:"match_id" binding:"required"`
-	PredictedHomeScore int  `json:"predicted_home_score" binding:"required,min=0"`
-	PredictedAwayScore int  `json:"predicted_away_score" binding:"required,min=0"`
+	PredictedHomeScore *int `json:"predicted_home_score" binding:"required,min=0"`
+	PredictedAwayScore *int `json:"predicted_away_score" binding:"required,min=0"`
 }
 
 type PredictionResponse struct {
