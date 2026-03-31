@@ -67,3 +67,21 @@ export const getMyRank = (competitionId) => {
 
 // User APIs
 export const getProfile = () => api.get('/users/profile');
+
+// Group APIs
+export const getMyGroups = () => api.get('/groups');
+export const getGroup = (id) => api.get(`/groups/${id}`);
+export const createGroup = (data) => api.post('/groups', data);
+export const joinGroup = (inviteCode) => api.post('/groups/join', { invite_code: inviteCode });
+export const leaveGroup = (id) => api.delete(`/groups/${id}/leave`);
+export const deleteGroup = (id) => api.delete(`/groups/${id}`);
+export const getGroupMembers = (id) => api.get(`/groups/${id}/members`);
+export const getGroupCompetitions = (id) => api.get(`/groups/${id}/competitions`);
+export const addGroupCompetition = (id, competitionId) =>
+  api.post(`/groups/${id}/competitions`, { competition_id: competitionId });
+export const removeGroupCompetition = (id, competitionId) =>
+  api.delete(`/groups/${id}/competitions/${competitionId}`);
+export const getGroupLeaderboard = (groupId, competitionId, limit = 50) =>
+  api.get(`/groups/${groupId}/leaderboard/${competitionId}`, { params: { limit } });
+export const transferGroupOwnership = (id, newOwnerId) =>
+  api.put(`/groups/${id}/transfer-owner`, { new_owner_id: newOwnerId });

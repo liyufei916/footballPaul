@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Trophy, LogOut, User, Settings } from 'lucide-react';
+import { Trophy, LogOut, User, Settings, Users } from 'lucide-react';
 
 export default function Navbar() {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
@@ -16,7 +16,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 pitch-gradient rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-pitch-600 rounded-full flex items-center justify-center">
               <Trophy className="w-6 h-6 text-white" />
             </div>
             <span className="text-xl font-bold text-white">FootballPaul</span>
@@ -43,6 +43,13 @@ export default function Navbar() {
                   className="text-slate-300 hover:text-pitch-400 transition-colors"
                 >
                   我的预测
+                </Link>
+                <Link
+                  to="/groups"
+                  className="text-slate-300 hover:text-pitch-400 transition-colors flex items-center gap-1.5"
+                >
+                  <Users className="w-4 h-4" />
+                  我的组
                 </Link>
                 {isAdmin && (
                   <Link

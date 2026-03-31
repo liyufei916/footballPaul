@@ -9,6 +9,13 @@ import MatchDetailPage from './pages/MatchDetailPage';
 import MyPredictionsPage from './pages/MyPredictionsPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import AdminPage from './pages/AdminPage';
+import MyGroupsPage from './pages/MyGroupsPage';
+import CreateGroupPage from './pages/CreateGroupPage';
+import JoinGroupPage from './pages/JoinGroupPage';
+import GroupDetailPage from './pages/GroupDetailPage';
+import GroupMembersPage from './pages/GroupMembersPage';
+import GroupLeaderboardPage from './pages/GroupLeaderboardPage';
+import AddGroupCompetitionPage from './pages/AddGroupCompetitionPage';
 
 export default function App() {
   return (
@@ -22,6 +29,8 @@ export default function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/matches/:id" element={<MatchDetailPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
+
+            {/* Protected Routes */}
             <Route
               path="/my-predictions"
               element={
@@ -35,6 +44,64 @@ export default function App() {
               element={
                 <ProtectedRoute adminOnly>
                   <AdminPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Group Routes */}
+            <Route
+              path="/groups"
+              element={
+                <ProtectedRoute>
+                  <MyGroupsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/groups/new"
+              element={
+                <ProtectedRoute>
+                  <CreateGroupPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/groups/join"
+              element={
+                <ProtectedRoute>
+                  <JoinGroupPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/groups/:id"
+              element={
+                <ProtectedRoute>
+                  <GroupDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/groups/:id/members"
+              element={
+                <ProtectedRoute>
+                  <GroupMembersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/groups/:id/leaderboard/:competitionId"
+              element={
+                <ProtectedRoute>
+                  <GroupLeaderboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/groups/:id/add-competition"
+              element={
+                <ProtectedRoute>
+                  <AddGroupCompetitionPage />
                 </ProtectedRoute>
               }
             />
