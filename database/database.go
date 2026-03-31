@@ -42,6 +42,9 @@ func AutoMigrate() error {
 		&models.Match{},
 		&models.Prediction{},
 		&models.ScoringRule{},
+		&models.Group{},
+		&models.GroupMember{},
+		&models.GroupCompetition{},
 	)
 }
 

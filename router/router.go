@@ -17,6 +17,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	predictionHandler := handlers.NewPredictionHandler()
 	leaderboardHandler := handlers.NewLeaderboardHandler()
 	competitionHandler := handlers.NewCompetitionHandler()
+	groupHandler := handlers.NewGroupHandler()
 
 	api := r.Group("/api")
 	{
@@ -61,6 +62,28 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 			{
 				leaderboardAuth.GET("/my-rank", leaderboardHandler.GetUserRank)
 			}
+		}
+
+		// Group routes
+		groups := api.Group("/groups")
+		groups.Use(middleware.AuthMiddleware(cfg))
+		{
+			groups.POST("", groupHandler.CreateGroup)
+			groups.GET("", groupHandler.GetMyGroups)
+			groups.POST("/join", groupHandler.JoinGroup)
+
+			groups.GET("/:id", groupHandler.GetGroup)
+			groups.DELETE("/:id", groupHandler.DeleteGroup)
+			groups.DELETE("/:id/leave", groupHandler.LeaveGroup)
+
+			groups.GET("/:id/members", groupHandler.GetMembers)
+
+			groups.GET("/:id/competitions", groupHandler.GetCompetitions)
+			groups.POST("/:id/competitions", groupHandler.AddCompetition)
+			groups.DELETE("/:id/competitions/:competitionId", groupHandler.RemoveCompetition)
+
+			groups.GET("/:id/leaderboard/:competitionId", groupHandler.GetLeaderboard)
+			groups.PUT("/:id/transfer-owner", groupHandler.TransferOwnership)
 		}
 
 		users := api.Group("/users")
