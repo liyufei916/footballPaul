@@ -8,15 +8,17 @@ import (
 )
 
 func TestPredictionRequest_Fields(t *testing.T) {
+	home := 2
+	away := 1
 	req := PredictionRequest{
 		MatchID:            10,
-		PredictedHomeScore: 2,
-		PredictedAwayScore: 1,
+		PredictedHomeScore: &home,
+		PredictedAwayScore: &away,
 	}
 
 	assert.Equal(t, uint(10), req.MatchID)
-	assert.Equal(t, 2, req.PredictedHomeScore)
-	assert.Equal(t, 1, req.PredictedAwayScore)
+	assert.Equal(t, 2, *req.PredictedHomeScore)
+	assert.Equal(t, 1, *req.PredictedAwayScore)
 }
 
 func TestPredictionResponse_Fields(t *testing.T) {
