@@ -15,13 +15,14 @@ func NewMatchService() *MatchService {
 	return &MatchService{}
 }
 
-func (s *MatchService) CreateMatch(homeTeam, awayTeam string, matchDate, deadline time.Time) (*models.Match, error) {
+func (s *MatchService) CreateMatch(competitionID uint, homeTeam, awayTeam string, matchDate, deadline time.Time) (*models.Match, error) {
 	match := &models.Match{
-		HomeTeam:  homeTeam,
-		AwayTeam:  awayTeam,
-		MatchDate: matchDate,
-		Deadline:  deadline,
-		Status:    models.MatchStatusPending,
+		CompetitionID: competitionID,
+		HomeTeam:      homeTeam,
+		AwayTeam:      awayTeam,
+		MatchDate:     matchDate,
+		Deadline:      deadline,
+		Status:        models.MatchStatusPending,
 	}
 
 	result := database.DB.Create(match)
@@ -34,7 +35,7 @@ func (s *MatchService) CreateMatch(homeTeam, awayTeam string, matchDate, deadlin
 
 func (s *MatchService) GetMatchByID(id uint) (*models.Match, error) {
 	var match models.Match
-	result := database.DB.First(&match, id)
+	result := database.DB.Preload("Competition").First(&match, id)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, errors.New("match not found")
@@ -44,12 +45,16 @@ func (s *MatchService) GetMatchByID(id uint) (*models.Match, error) {
 	return &match, nil
 }
 
-func (s *MatchService) GetMatches(status models.MatchStatus, limit int) ([]models.Match, error) {
+func (s *MatchService) GetMatches(status models.MatchStatus, competitionID uint, limit int) ([]models.Match, error) {
 	var matches []models.Match
-	query := database.DB
+	query := database.DB.Preload("Competition")
 
 	if status != "" {
 		query = query.Where("status = ?", status)
+	}
+
+	if competitionID > 0 {
+		query = query.Where("competition_id = ?", competitionID)
 	}
 
 	if limit > 0 {
@@ -93,7 +98,7 @@ func (s *MatchService) UpdateMatchResult(matchID uint, homeScore, awayScore int)
 	}
 
 	scoringService := NewScoringService()
-	scoredCount, err := scoringService.ScoreMatchPredictions(tx, matchID, homeScore, awayScore)
+	_, err = scoringService.ScoreMatchPredictions(tx, matchID, homeScore, awayScore)
 	if err != nil {
 		tx.Rollback()
 		return err

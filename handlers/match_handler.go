@@ -21,10 +21,11 @@ func NewMatchHandler() *MatchHandler {
 }
 
 type CreateMatchRequest struct {
-	HomeTeam  string    `json:"home_team" binding:"required"`
-	AwayTeam  string    `json:"away_team" binding:"required"`
-	MatchDate time.Time `json:"match_date" binding:"required"`
-	Deadline  time.Time `json:"deadline" binding:"required"`
+	CompetitionID uint      `json:"competition_id" binding:"required"`
+	HomeTeam     string    `json:"home_team" binding:"required"`
+	AwayTeam     string    `json:"away_team" binding:"required"`
+	MatchDate    time.Time `json:"match_date" binding:"required"`
+	Deadline     time.Time `json:"deadline" binding:"required"`
 }
 
 func (h *MatchHandler) CreateMatch(c *gin.Context) {
@@ -34,7 +35,7 @@ func (h *MatchHandler) CreateMatch(c *gin.Context) {
 		return
 	}
 
-	match, err := h.matchService.CreateMatch(req.HomeTeam, req.AwayTeam, req.MatchDate, req.Deadline)
+	match, err := h.matchService.CreateMatch(req.CompetitionID, req.HomeTeam, req.AwayTeam, req.MatchDate, req.Deadline)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -65,10 +66,17 @@ func (h *MatchHandler) GetMatch(c *gin.Context) {
 
 func (h *MatchHandler) GetMatches(c *gin.Context) {
 	status := models.MatchStatus(c.Query("status"))
+	competitionIDStr := c.Query("competition_id")
 	limitStr := c.DefaultQuery("limit", "10")
-	limit, _ := strconv.Atoi(limitStr)
 
-	matches, err := h.matchService.GetMatches(status, limit)
+	competitionID, _ := strconv.ParseUint(competitionIDStr, 10, 32)
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 0 {
+		limit = 10
+	}
+
+	matches, err := h.matchService.GetMatches(status, uint(competitionID), limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

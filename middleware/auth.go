@@ -46,7 +46,24 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		userID := uint(claims["user_id"].(float64))
+		userIDVal, ok := claims["user_id"]
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user_id not found in token"})
+			c.Abort()
+			return
+		}
+
+		var userID uint
+		switch v := userIDVal.(type) {
+		case float64:
+			userID = uint(v)
+		case int:
+			userID = uint(v)
+		default:
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user_id type in token"})
+			c.Abort()
+			return
+		}
 		c.Set("userID", userID)
 
 		c.Next()

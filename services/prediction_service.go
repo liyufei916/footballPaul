@@ -84,12 +84,19 @@ func (s *PredictionService) UpdatePrediction(predictionID, userID uint, predicte
 	return &prediction, nil
 }
 
-func (s *PredictionService) GetUserPredictions(userID uint, includeMatch bool) ([]models.Prediction, error) {
+func (s *PredictionService) GetUserPredictions(userID uint, competitionID uint, includeMatch bool) ([]models.Prediction, error) {
 	var predictions []models.Prediction
-	query := database.DB.Where("user_id = ?", userID).Order("created_at DESC")
+	query := database.DB.Where("user_id = ?", userID)
+
+	if competitionID > 0 {
+		query = query.Joins("JOIN matches ON predictions.match_id = matches.id").
+			Where("matches.competition_id = ?", competitionID)
+	}
+
+	query = query.Order("predictions.created_at DESC")
 
 	if includeMatch {
-		query = query.Preload("Match")
+		query = query.Preload("Match").Preload("Match.Competition")
 	}
 
 	result := query.Find(&predictions)

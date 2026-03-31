@@ -10,6 +10,7 @@ type User struct {
 	Email       string    `gorm:"unique;not null" json:"email"`
 	Password    string    `gorm:"not null" json:"-"`
 	TotalPoints int       `gorm:"default:0" json:"total_points"`
+	IsAdmin     bool      `gorm:"default:false" json:"is_admin"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 
@@ -21,6 +22,7 @@ type UserResponse struct {
 	Username    string    `json:"username"`
 	Email       string    `json:"email"`
 	TotalPoints int       `json:"total_points"`
+	IsAdmin     bool      `json:"is_admin"`
 	CreatedAt   time.Time `json:"created_at"`
 }
 
@@ -30,6 +32,7 @@ func (u *User) ToResponse() UserResponse {
 		Username:    u.Username,
 		Email:       u.Email,
 		TotalPoints: u.TotalPoints,
+		IsAdmin:     u.IsAdmin,
 		CreatedAt:   u.CreatedAt,
 	}
 }

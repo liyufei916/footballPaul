@@ -16,6 +16,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	matchHandler := handlers.NewMatchHandler()
 	predictionHandler := handlers.NewPredictionHandler()
 	leaderboardHandler := handlers.NewLeaderboardHandler()
+	competitionHandler := handlers.NewCompetitionHandler()
 
 	api := r.Group("/api")
 	{
@@ -25,16 +26,22 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 			auth.POST("/login", userHandler.Login)
 		}
 
+		competitions := api.Group("/competitions")
+		{
+			competitions.GET("", competitionHandler.GetCompetitions)
+			competitions.GET("/:id", competitionHandler.GetCompetition)
+		}
+
 		matches := api.Group("/matches")
 		{
 			matches.GET("", matchHandler.GetMatches)
 			matches.GET("/:id", matchHandler.GetMatch)
-			matches.GET("/:matchId/predictions", predictionHandler.GetMatchPredictions)
 
 			matchesAuth := matches.Use(middleware.AuthMiddleware(cfg))
 			{
 				matchesAuth.POST("", matchHandler.CreateMatch)
 				matchesAuth.PUT("/:id/result", matchHandler.UpdateMatchResult)
+				matchesAuth.GET("/:id/predictions", predictionHandler.GetMatchPredictions)
 			}
 		}
 

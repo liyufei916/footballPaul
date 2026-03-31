@@ -6,7 +6,7 @@ import (
 
 	"github.com/liyufei916/footballPaul/config"
 	"github.com/liyufei916/footballPaul/models"
-	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -15,9 +15,8 @@ var DB *gorm.DB
 
 func InitDatabase(cfg *config.Config) error {
 	var err error
-	dsn := cfg.Database.GetDSN()
 
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+	DB, err = gorm.Open(sqlite.Open(cfg.Database.DSN), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 
@@ -39,6 +38,7 @@ func InitDatabase(cfg *config.Config) error {
 func AutoMigrate() error {
 	return DB.AutoMigrate(
 		&models.User{},
+		&models.Competition{},
 		&models.Match{},
 		&models.Prediction{},
 		&models.ScoringRule{},
@@ -89,5 +89,29 @@ func SeedDefaultScoringRules() error {
 	}
 
 	log.Printf("Seeded %d scoring rules", len(rules))
+	return nil
+}
+
+func SeedDefaultCompetitions() error {
+	var count int64
+	if err := DB.Model(&models.Competition{}).Count(&count).Error; err != nil {
+		return err
+	}
+
+	if count > 0 {
+		log.Println("Competitions already exist, skipping seed")
+		return nil
+	}
+
+	competitions := []models.Competition{
+		{Name: "2026世界杯", Code: "2026WORLD_CUP"},
+	}
+
+	result := DB.Create(&competitions)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	log.Printf("Seeded %d competitions", len(competitions))
 	return nil
 }

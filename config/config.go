@@ -18,6 +18,7 @@ type DatabaseConfig struct {
 	Password string
 	DBName   string
 	SSLMode  string
+	DSN      string
 }
 
 type ServerConfig struct {
@@ -29,14 +30,16 @@ type JWTConfig struct {
 }
 
 func LoadConfig() *Config {
+	dbName := getEnv("DB_NAME", "footballpaul.db")
 	return &Config{
 		Database: DatabaseConfig{
 			Host:     getEnv("DB_HOST", "localhost"),
 			Port:     getEnv("DB_PORT", "5432"),
 			User:     getEnv("DB_USER", "postgres"),
 			Password: getEnv("DB_PASSWORD", "postgres"),
-			DBName:   getEnv("DB_NAME", "footballpaul"),
+			DBName:   dbName,
 			SSLMode:  getEnv("DB_SSLMODE", "disable"),
+			DSN:      getEnv("DB_DSN", dbName),
 		},
 		Server: ServerConfig{
 			Port: getEnv("SERVER_PORT", "8080"),

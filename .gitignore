@@ -35,3 +35,6 @@ Thumbs.db
 bin/
 dist/
 build/
+
+# Frontend dependencies
+frontend/node_modules/

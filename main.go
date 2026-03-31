@@ -19,6 +19,10 @@ func main() {
 		log.Println("Warning: Failed to seed scoring rules:", err)
 	}
 
+	if err := database.SeedDefaultCompetitions(); err != nil {
+		log.Println("Warning: Failed to seed competitions:", err)
+	}
+
 	r := router.SetupRouter(cfg)
 
 	log.Printf("Server starting on port %s...", cfg.Server.Port)

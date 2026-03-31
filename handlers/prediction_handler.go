@@ -95,7 +95,10 @@ func (h *PredictionHandler) GetUserPredictions(c *gin.Context) {
 		return
 	}
 
-	predictions, err := h.predictionService.GetUserPredictions(userID.(uint), true)
+	competitionIDStr := c.Query("competition_id")
+	competitionID, _ := strconv.ParseUint(competitionIDStr, 10, 32)
+
+	predictions, err := h.predictionService.GetUserPredictions(userID.(uint), uint(competitionID), true)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -108,7 +111,7 @@ func (h *PredictionHandler) GetUserPredictions(c *gin.Context) {
 }
 
 func (h *PredictionHandler) GetMatchPredictions(c *gin.Context) {
-	idStr := c.Param("matchId")
+	idStr := c.Param("id")
 	matchID, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid match id"})

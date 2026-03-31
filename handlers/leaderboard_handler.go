@@ -19,10 +19,17 @@ func NewLeaderboardHandler() *LeaderboardHandler {
 }
 
 func (h *LeaderboardHandler) GetLeaderboard(c *gin.Context) {
-	limitStr := c.DefaultQuery("limit", "10")
-	limit, _ := strconv.Atoi(limitStr)
+	limitStr := c.DefaultQuery("limit", "50")
+	competitionIDStr := c.Query("competition_id")
 
-	leaderboard, err := h.leaderboardService.GetLeaderboard(limit)
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 0 {
+		limit = 50
+	}
+
+	competitionID, _ := strconv.ParseUint(competitionIDStr, 10, 32)
+
+	leaderboard, err := h.leaderboardService.GetLeaderboard(uint(competitionID), limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -40,7 +47,10 @@ func (h *LeaderboardHandler) GetUserRank(c *gin.Context) {
 		return
 	}
 
-	rank, err := h.leaderboardService.GetUserRank(userID.(uint))
+	competitionIDStr := c.Query("competition_id")
+	competitionID, _ := strconv.ParseUint(competitionIDStr, 10, 32)
+
+	rank, err := h.leaderboardService.GetUserRank(userID.(uint), uint(competitionID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

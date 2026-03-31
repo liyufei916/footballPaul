@@ -16,6 +16,22 @@ func NewUserService() *UserService {
 }
 
 func (s *UserService) CreateUser(username, email, password string) (*models.User, error) {
+	// Check for existing user by email (case-insensitive)
+	var existingByEmail models.User
+	if err := database.DB.Where("LOWER(email) = LOWER(?)", email).First(&existingByEmail).Error; err == nil {
+		return nil, errors.New("该邮箱已被注册")
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+
+	// Check for existing user by username (case-insensitive)
+	var existingByUsername models.User
+	if err := database.DB.Where("LOWER(username) = LOWER(?)", username).First(&existingByUsername).Error; err == nil {
+		return nil, errors.New("该用户名已被使用")
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
@@ -49,7 +65,7 @@ func (s *UserService) GetUserByID(id uint) (*models.User, error) {
 
 func (s *UserService) GetUserByEmail(email string) (*models.User, error) {
 	var user models.User
-	result := database.DB.Where("email = ?", email).First(&user)
+	result := database.DB.Where("LOWER(email) = LOWER(?)", email).First(&user)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, errors.New("user not found")
