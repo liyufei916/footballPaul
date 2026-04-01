@@ -174,7 +174,7 @@ export default function MatchDetailPage() {
                 登录参与预测
               </button>
             </div>
-          ) : canPredict || userPrediction ? (
+          ) : canPredict ? (
             <div>
               <h3 className="text-lg font-semibold text-white mb-4">
                 {userPrediction ? '修改你的预测' : '提交你的预测'}

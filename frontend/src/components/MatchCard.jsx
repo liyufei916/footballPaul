@@ -58,7 +58,7 @@ export default function MatchCard({ match }) {
             {match.status === 'pending' && (
               <div className={`flex items-center gap-1.5 text-sm ${isDeadlinePassed ? 'text-red-400' : 'text-amber-400'}`}>
                 <Clock className="w-4 h-4" />
-                {isDeadlinePassed ? '已截止' : '截止'}
+                {isDeadlinePassed ? '已截止' : `截止 ${format(new Date(match.deadline), 'MM/dd HH:mm', { locale: zhCN })}`}
               </div>
             )}
           </div>

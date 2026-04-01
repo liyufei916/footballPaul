@@ -47,3 +47,28 @@ func (h *CompetitionHandler) GetCompetition(c *gin.Context) {
 
 	c.JSON(http.StatusOK, competition)
 }
+
+type CreateCompetitionRequest struct {
+	Name string `json:"name" binding:"required,min=1,max=100"`
+	Code string `json:"code" binding:"required,min=1,max=20"`
+	Logo string `json:"logo"`
+}
+
+func (h *CompetitionHandler) CreateCompetition(c *gin.Context) {
+	var req CreateCompetitionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	competition, err := h.competitionService.CreateCompetition(req.Name, req.Code, req.Logo)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"success":     true,
+		"competition": competition,
+	})
+}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getCompetitions, createMatch, enterResult, getMatches } from '../api/apiClient';
-import { Settings, Plus, Trophy, AlertCircle, CheckCircle, Edit2 } from 'lucide-react';
+import { getCompetitions, createMatch, enterResult, getMatches, createCompetition } from '../api/apiClient';
+import { Settings, Plus, Trophy, AlertCircle, CheckCircle, Edit2, Medal } from 'lucide-react';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 
@@ -10,6 +10,12 @@ export default function AdminPage() {
   const [competitions, setCompetitions] = useState([]);
   const [matches, setMatches] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Create competition form
+  const [compName, setCompName] = useState('');
+  const [compCode, setCompCode] = useState('');
+  const [createCompError, setCreateCompError] = useState('');
+  const [createCompSuccess, setCreateCompSuccess] = useState('');
 
   // Create match form
   const [selectedCompetition, setSelectedCompetition] = useState('');
@@ -57,6 +63,28 @@ export default function AdminPage() {
       setMatches(response.data.matches || []);
     } catch (err) {
       console.error('Failed to fetch matches:', err);
+    }
+  };
+
+  const handleCreateCompetition = async (e) => {
+    e.preventDefault();
+    setCreateCompError('');
+    setCreateCompSuccess('');
+    setIsLoading(true);
+
+    try {
+      await createCompetition({
+        name: compName,
+        code: compCode,
+      });
+      setCreateCompSuccess('赛事创建成功！');
+      setCompName('');
+      setCompCode('');
+      fetchCompetitions();
+    } catch (err) {
+      setCreateCompError(err.response?.data?.error || '创建失败');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -166,6 +194,62 @@ export default function AdminPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Create Competition */}
+        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <Medal className="w-5 h-5 text-gold-500" />
+            <h2 className="text-lg font-semibold text-white">创建赛事</h2>
+          </div>
+
+          {createCompError && (
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-sm">
+              <AlertCircle className="w-4 h-4" />
+              {createCompError}
+            </div>
+          )}
+
+          {createCompSuccess && (
+            <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg flex items-center gap-2 text-green-400 text-sm">
+              <CheckCircle className="w-4 h-4" />
+              {createCompSuccess}
+            </div>
+          )}
+
+          <form onSubmit={handleCreateCompetition} className="space-y-4">
+            <div>
+              <label className="block text-slate-300 text-sm mb-1">赛事名称</label>
+              <input
+                type="text"
+                value={compName}
+                onChange={(e) => setCompName(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-pitch-500"
+                placeholder="如: 欧洲杯 2024"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-300 text-sm mb-1">赛事代码</label>
+              <input
+                type="text"
+                value={compCode}
+                onChange={(e) => setCompCode(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-pitch-500"
+                placeholder="如: EURO2024"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-gold-500 hover:bg-gold-600 text-white font-medium py-2 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {isLoading ? '创建中...' : '创建赛事'}
+            </button>
+          </form>
+        </div>
+
         {/* Create Match */}
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
           <div className="flex items-center gap-2 mb-6">

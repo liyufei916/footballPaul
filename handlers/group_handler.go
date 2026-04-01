@@ -353,6 +353,37 @@ func (h *GroupHandler) GetLeaderboard(c *gin.Context) {
 	})
 }
 
+// GetGroupCompetitionPredictions returns all predictions from group members for a competition
+// GET /api/groups/:id/competitions/:competitionId/predictions
+func (h *GroupHandler) GetGroupCompetitionPredictions(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	groupID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的组队ID"})
+		return
+	}
+	competitionID, err := strconv.ParseUint(c.Param("competitionId"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的赛事ID"})
+		return
+	}
+
+	if !h.groupService.IsGroupMember(uint(groupID), userID.(uint)) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "你不是该组成员"})
+		return
+	}
+
+	predictions, err := h.groupService.GetGroupCompetitionPredictions(uint(groupID), uint(competitionID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取预测列表失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"predictions": predictions,
+	})
+}
+
 // TransferOwnership transfers group ownership to another member
 // PUT /api/groups/:id/transfer-owner
 func (h *GroupHandler) TransferOwnership(c *gin.Context) {

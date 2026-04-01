@@ -36,6 +36,7 @@ export default api;
 // Competition APIs
 export const getCompetitions = () => api.get('/competitions');
 export const getCompetition = (id) => api.get(`/competitions/${id}`);
+export const createCompetition = (data) => api.post('/competitions', data);
 
 // Match APIs
 export const getMatches = (params) => api.get('/matches', { params });
@@ -85,3 +86,5 @@ export const getGroupLeaderboard = (groupId, competitionId, limit = 50) =>
   api.get(`/groups/${groupId}/leaderboard/${competitionId}`, { params: { limit } });
 export const transferGroupOwnership = (id, newOwnerId) =>
   api.put(`/groups/${id}/transfer-owner`, { new_owner_id: newOwnerId });
+export const getGroupMatchPredictions = (groupId, competitionId) =>
+  api.get(`/groups/${groupId}/competitions/${competitionId}/predictions`);
