@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getGroup, getGroupCompetitions, getGroupMatchPredictions } from '../api/apiClient';
-import { Users, Trophy, ArrowLeft, Calendar, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { getGroup, getGroupMatchPredictions } from '../api/apiClient';
+import { Users, Trophy, ArrowLeft, Calendar, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { useAuth } from '../context/AuthContext';
@@ -28,7 +28,6 @@ export default function GroupPredictionsPage() {
       setGroup(groupRes.data.group);
       setPredictions(predictionsRes.data.predictions || []);
       
-      // Find competition info
       if (predictionsRes.data.predictions && predictionsRes.data.predictions.length > 0) {
         setCompetition(predictionsRes.data.predictions[0].match.competition);
       }
@@ -48,6 +47,10 @@ export default function GroupPredictionsPage() {
         {points}分
       </span>
     );
+  };
+
+  const isDeadlinePassed = (deadline) => {
+    return deadline && new Date(deadline) < new Date();
   };
 
   if (isLoading) {
@@ -87,80 +90,91 @@ export default function GroupPredictionsPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {predictions.map((item) => (
-            <div key={item.match.id} className="bg-slate-800 border border-slate-700 rounded-xl p-5">
-              {/* Match Header */}
-              <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-700">
-                <div className="flex items-center gap-2">
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                    item.match.status === 'finished' ? 'bg-slate-600 text-slate-300' :
-                    item.match.status === 'ongoing' ? 'bg-green-600 text-white' :
-                    'bg-amber-600 text-white'
-                  }`}>
-                    {item.match.status === 'finished' ? '已结束' : 
-                     item.match.status === 'ongoing' ? '进行中' : '待开始'}
-                  </span>
-                  {item.match.status === 'finished' && item.match.home_score != null && (
-                    <span className="text-white font-bold">
-                      {item.match.home_score} - {item.match.away_score}
+          {predictions.map((item) => {
+            const passed = isDeadlinePassed(item.match.deadline);
+            return (
+              <div key={item.match.id} className="bg-slate-800 border border-slate-700 rounded-xl p-5">
+                {/* Match Header */}
+                <div className="flex items-start justify-between mb-4 pb-4 border-b border-slate-700">
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                      item.match.status === 'finished' ? 'bg-slate-600 text-slate-300' :
+                      item.match.status === 'ongoing' ? 'bg-green-600 text-white' :
+                      'bg-amber-600 text-white'
+                    }`}>
+                      {item.match.status === 'finished' ? '已结束' : 
+                       item.match.status === 'ongoing' ? '进行中' : '待开始'}
                     </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5 text-slate-400 text-sm">
-                  <Calendar className="w-4 h-4" />
-                  {format(new Date(item.match.match_date), 'MM/dd HH:mm', { locale: zhCN })}
-                </div>
-              </div>
-
-              {/* Teams */}
-              <div className="flex items-center justify-between mb-4">
-                <div className="text-lg font-semibold text-white text-center flex-1">
-                  {item.match.home_team}
-                </div>
-                <div className="text-slate-500 text-xl px-4">vs</div>
-                <div className="text-lg font-semibold text-white text-center flex-1">
-                  {item.match.away_team}
-                </div>
-              </div>
-
-              {/* Predictions */}
-              {item.predictions.length === 0 ? (
-                <div className="text-center py-4 text-slate-500 text-sm">
-                  暂无成员预测
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-3 gap-4 text-xs text-slate-400 px-2 mb-2">
-                    <div>成员</div>
-                    <div className="text-center">预测比分</div>
-                    <div className="text-right">积分</div>
+                    {item.match.status === 'finished' && item.match.home_score != null && (
+                      <span className="text-white font-bold">
+                        {item.match.home_score} - {item.match.away_score}
+                      </span>
+                    )}
                   </div>
-                  {item.predictions.map((pred) => (
-                    <div
-                      key={pred.user_id}
-                      className="grid grid-cols-3 gap-4 items-center py-2 px-2 rounded-lg hover:bg-slate-700/30"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-slate-500" />
-                        <span className="text-white truncate">
-                          {pred.username}
-                          {pred.user_id === user?.id && (
-                            <span className="text-pitch-400 text-xs ml-1">(你)</span>
-                          )}
-                        </span>
-                      </div>
-                      <div className="text-center text-white font-mono">
-                        {pred.predicted_home_score} - {pred.predicted_away_score}
-                      </div>
-                      <div className="text-right">
-                        {renderPoints(pred.points, pred.is_scored)}
-                      </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="flex items-center gap-1.5 text-slate-400 text-sm">
+                      <Calendar className="w-4 h-4" />
+                      {format(new Date(item.match.match_date), 'MM/dd HH:mm', { locale: zhCN })}
                     </div>
-                  ))}
+                    {item.match.status === 'pending' && (
+                      <div className={`flex items-center gap-1.5 text-sm ${passed ? 'text-red-400' : 'text-amber-400'}`}>
+                        <Clock className="w-4 h-4" />
+                        {passed ? '已截止' : `截止 ${format(new Date(item.match.deadline), 'MM/dd HH:mm', { locale: zhCN })}`}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
-          ))}
+
+                {/* Teams */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-lg font-semibold text-white text-center flex-1">
+                    {item.match.home_team}
+                  </div>
+                  <div className="text-slate-500 text-xl px-4">vs</div>
+                  <div className="text-lg font-semibold text-white text-center flex-1">
+                    {item.match.away_team}
+                  </div>
+                </div>
+
+                {/* Predictions */}
+                {item.predictions.length === 0 ? (
+                  <div className="text-center py-4 text-slate-500 text-sm">
+                    暂无成员预测
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-3 gap-4 text-xs text-slate-400 px-2 mb-2">
+                      <div>成员</div>
+                      <div className="text-center">预测比分</div>
+                      <div className="text-right">积分</div>
+                    </div>
+                    {item.predictions.map((pred) => (
+                      <div
+                        key={pred.user_id}
+                        className="grid grid-cols-3 gap-4 items-center py-2 px-2 rounded-lg hover:bg-slate-700/30"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-slate-500" />
+                          <span className="text-white truncate">
+                            {pred.username}
+                            {pred.user_id === user?.id && (
+                              <span className="text-pitch-400 text-xs ml-1">(你)</span>
+                            )}
+                          </span>
+                        </div>
+                        <div className="text-center text-white font-mono">
+                          {pred.predicted_home_score} - {pred.predicted_away_score}
+                        </div>
+                        <div className="text-right">
+                          {renderPoints(pred.points, pred.is_scored)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

@@ -373,7 +373,7 @@ func (s *GroupService) GetGroupCompetitionPredictions(groupID, competitionID uin
 	// Verify user is a member of the group
 	// Get all matches in the competition
 	var matches []models.Match
-	if err := database.DB.Where("competition_id = ?", competitionID).Order("match_date ASC").Find(&matches).Error; err != nil {
+	if err := database.DB.Preload("Competition").Where("competition_id = ?", competitionID).Order("match_date ASC").Find(&matches).Error; err != nil {
 		return nil, err
 	}
 
