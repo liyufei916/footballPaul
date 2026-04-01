@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getGroup, getGroupCompetitions, leaveGroup, deleteGroup, getMyGroups } from '../api/apiClient';
 import { Users, Trophy, ArrowLeft, Crown, Plus, Trash2, LogOut, Eye } from 'lucide-react';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function GroupDetailPage() {
   const { id } = useParams();
