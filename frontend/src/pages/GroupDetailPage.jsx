@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getGroup, getGroupCompetitions, leaveGroup, deleteGroup, getMyGroups } from '../api/apiClient';
-import { Users, Trophy, ArrowLeft, Crown, Plus, Trash2, LogOut } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { Users, Trophy, ArrowLeft, Crown, Plus, Trash2, LogOut, Eye } from 'lucide-react';
+import { useAuth } from './context/AuthContext';
 
 export default function GroupDetailPage() {
   const { id } = useParams();
@@ -173,12 +173,21 @@ export default function GroupDetailPage() {
                   <div>
                     <h3 className="font-medium text-white">{comp.name}</h3>
                   </div>
-                  <Link
-                    to={`/groups/${id}/leaderboard/${comp.id}`}
-                    className="bg-pitch-600 hover:bg-pitch-700 text-white px-4 py-1.5 rounded-lg text-sm transition-colors"
-                  >
-                    组排行榜
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to={`/groups/${id}/predictions/${comp.id}`}
+                      className="flex items-center gap-1 text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-sm transition-colors bg-slate-700/50 hover:bg-slate-700"
+                    >
+                      <Eye className="w-4 h-4" />
+                      预测一览
+                    </Link>
+                    <Link
+                      to={`/groups/${id}/leaderboard/${comp.id}`}
+                      className="bg-pitch-600 hover:bg-pitch-700 text-white px-4 py-1.5 rounded-lg text-sm transition-colors"
+                    >
+                      组排行榜
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}

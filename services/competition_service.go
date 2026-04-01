@@ -34,3 +34,16 @@ func (s *CompetitionService) GetCompetitionByID(id uint) (*models.Competition, e
 	}
 	return &competition, nil
 }
+
+func (s *CompetitionService) CreateCompetition(name, code, logo string) (*models.Competition, error) {
+	competition := &models.Competition{
+		Name: name,
+		Code: code,
+		Logo: logo,
+	}
+	result := database.DB.Create(competition)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return competition, nil
+}

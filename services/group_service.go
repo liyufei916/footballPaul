@@ -367,3 +367,81 @@ func (s *GroupService) TransferOwnership(groupID, currentUserID, newOwnerID uint
 		return nil
 	})
 }
+
+// GetGroupCompetitionPredictions returns all predictions from group members for matches in a competition
+func (s *GroupService) GetGroupCompetitionPredictions(groupID, competitionID uint) ([]GroupMatchPrediction, error) {
+	// Verify user is a member of the group
+	// Get all matches in the competition
+	var matches []models.Match
+	if err := database.DB.Where("competition_id = ?", competitionID).Order("match_date ASC").Find(&matches).Error; err != nil {
+		return nil, err
+	}
+
+	if len(matches) == 0 {
+		return []GroupMatchPrediction{}, nil
+	}
+
+	// Get all group members
+	var members []models.GroupMember
+	if err := database.DB.Preload("User").Where("group_id = ?", groupID).Find(&members).Error; err != nil {
+		return nil, err
+	}
+
+	memberIDs := make([]uint, len(members))
+	memberMap := make(map[uint]string) // userID -> username
+	for i, m := range members {
+		memberIDs[i] = m.UserID
+		memberMap[m.UserID] = m.User.Username
+	}
+
+	// Get all predictions for these matches by group members
+	matchIDs := make([]uint, len(matches))
+	for i, m := range matches {
+		matchIDs[i] = m.ID
+	}
+
+	var predictions []models.Prediction
+	if err := database.DB.Preload("User").
+		Where("match_id IN ? AND user_id IN ?", matchIDs, memberIDs).
+		Find(&predictions).Error; err != nil {
+		return nil, err
+	}
+
+	// Organize predictions by match
+	result := make([]GroupMatchPrediction, 0, len(matches))
+	for _, match := range matches {
+		matchPredictions := make([]MemberPrediction, 0)
+		for _, p := range predictions {
+			if p.MatchID == match.ID {
+				matchPredictions = append(matchPredictions, MemberPrediction{
+					UserID:             p.UserID,
+					Username:           memberMap[p.UserID],
+					PredictedHomeScore: p.PredictedHomeScore,
+					PredictedAwayScore: p.PredictedAwayScore,
+					Points:             p.PointsEarned,
+					IsScored:           p.IsScored,
+				})
+			}
+		}
+		result = append(result, GroupMatchPrediction{
+			Match:       match,
+			Predictions: matchPredictions,
+		})
+	}
+
+	return result, nil
+}
+
+type GroupMatchPrediction struct {
+	Match       models.Match        `json:"match"`
+	Predictions []MemberPrediction  `json:"predictions"`
+}
+
+type MemberPrediction struct {
+	UserID             uint   `json:"user_id"`
+	Username           string `json:"username"`
+	PredictedHomeScore int    `json:"predicted_home_score"`
+	PredictedAwayScore int    `json:"predicted_away_score"`
+	Points             int    `json:"points"`
+	IsScored           bool   `json:"is_scored"`
+}

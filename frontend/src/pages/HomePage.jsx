@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getCompetitions, getMatches } from '../api/apiClient';
 import MatchCard from '../components/MatchCard';
-import { Trophy, ArrowLeft, Filter } from 'lucide-react';
+import { Trophy, ArrowLeft, Filter, Award, Info } from 'lucide-react';
 
 const statusFilters = [
   { value: '', label: '全部' },
@@ -10,12 +10,20 @@ const statusFilters = [
   { value: 'finished', label: '已结束' },
 ];
 
+const scoringRules = [
+  { points: 10, label: '完全正确', desc: '比分完全一致' },
+  { points: 7, label: '胜负+净胜球', desc: '猜中胜负和净胜球' },
+  { points: 5, label: '胜负正确', desc: '只猜中胜负' },
+  { points: 3, label: '猜中一方', desc: '只猜中一方进球数' },
+];
+
 export default function HomePage() {
   const [competitions, setCompetitions] = useState([]);
   const [selectedCompetition, setSelectedCompetition] = useState(null);
   const [matches, setMatches] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
+  const [showRules, setShowRules] = useState(false);
 
   useEffect(() => {
     fetchCompetitions();
@@ -86,7 +94,33 @@ export default function HomePage() {
             </p>
           </div>
         </div>
+        <button
+          onClick={() => setShowRules(!showRules)}
+          className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm"
+        >
+          <Award className="w-5 h-5" />
+          积分规则
+        </button>
       </div>
+
+      {/* Scoring Rules Panel */}
+      {showRules && (
+        <div className="bg-gradient-to-r from-pitch-900/50 to-slate-800/50 border border-pitch-600/30 rounded-xl p-6 mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Info className="w-5 h-5 text-pitch-400" />
+            <h2 className="text-lg font-semibold text-white">积分规则</h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {scoringRules.map((rule) => (
+              <div key={rule.points} className="bg-slate-800/50 rounded-lg p-4 text-center">
+                <div className="text-3xl font-bold text-pitch-400 mb-1">{rule.points}</div>
+                <div className="text-white font-medium">{rule.label}</div>
+                <div className="text-slate-400 text-sm">{rule.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {selectedCompetition && (
         <button

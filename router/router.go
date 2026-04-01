@@ -31,6 +31,11 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		{
 			competitions.GET("", competitionHandler.GetCompetitions)
 			competitions.GET("/:id", competitionHandler.GetCompetition)
+
+			competitionsAuth := competitions.Use(middleware.AuthMiddleware(cfg))
+			{
+				competitionsAuth.POST("", competitionHandler.CreateCompetition)
+			}
 		}
 
 		matches := api.Group("/matches")
@@ -81,6 +86,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 			groups.GET("/:id/competitions", groupHandler.GetCompetitions)
 			groups.POST("/:id/competitions", groupHandler.AddCompetition)
 			groups.DELETE("/:id/competitions/:competitionId", groupHandler.RemoveCompetition)
+			groups.GET("/:id/competitions/:competitionId/predictions", groupHandler.GetGroupCompetitionPredictions)
 
 			groups.GET("/:id/leaderboard/:competitionId", groupHandler.GetLeaderboard)
 			groups.PUT("/:id/transfer-owner", groupHandler.TransferOwnership)

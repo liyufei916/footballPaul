@@ -15,6 +15,7 @@ import JoinGroupPage from './pages/JoinGroupPage';
 import GroupDetailPage from './pages/GroupDetailPage';
 import GroupMembersPage from './pages/GroupMembersPage';
 import GroupLeaderboardPage from './pages/GroupLeaderboardPage';
+import GroupPredictionsPage from './pages/GroupPredictionsPage';
 import AddGroupCompetitionPage from './pages/AddGroupCompetitionPage';
 
 export default function App() {
@@ -94,6 +95,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <GroupLeaderboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/groups/:id/predictions/:competitionId"
+              element={
+                <ProtectedRoute>
+                  <GroupPredictionsPage />
                 </ProtectedRoute>
               }
             />
