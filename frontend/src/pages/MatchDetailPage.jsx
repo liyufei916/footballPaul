@@ -106,11 +106,11 @@ export default function MatchDetailPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <button
-        onClick={() => navigate('/')}
+        onClick={() => navigate(`/?competition_id=${match.competition_id}`)}
         className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors"
       >
         <ArrowLeft className="w-5 h-5" />
-        返回列表
+        返回赛事
       </button>
 
       <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
