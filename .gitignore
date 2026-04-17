@@ -38,3 +38,7 @@ build/
 
 # Frontend dependencies
 frontend/node_modules/
+
+# SQLite database
+*.db
+*.db-*
