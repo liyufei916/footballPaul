@@ -41,9 +41,12 @@ export default function HomePage() {
       const response = await getCompetitions();
       const comps = response.data.competitions || [];
       setCompetitions(comps);
-      // Auto-select first competition if available
-      if (comps.length > 0 && !selectedCompetition) {
-        setSelectedCompetition(comps[0]);
+      // 如果 URL 有 competition_id 参数，自动选中该赛事
+      const params = new URLSearchParams(window.location.search);
+      const cid = params.get('competition_id');
+      if (cid) {
+        const found = comps.find(c => c.id === parseInt(cid));
+        if (found) setSelectedCompetition(found);
       }
     } catch (err) {
       console.error('Failed to fetch competitions:', err);

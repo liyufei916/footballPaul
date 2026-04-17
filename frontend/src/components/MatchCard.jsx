@@ -31,37 +31,52 @@ export default function MatchCard({ match }) {
   return (
     <Link to={`/matches/${match.id}`}>
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-5 hover:border-pitch-600 transition-all hover:shadow-lg hover:shadow-pitch-900/20">
+        {/* Header row: status badge + score (for finished) */}
         <div className="flex items-center justify-between mb-4">
           <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${status.color}`}>
             <StatusIcon className="w-3.5 h-3.5" />
             {status.label}
           </span>
           {match.status === 'finished' && match.home_score != null && (
-            <span className="text-slate-400 text-sm">
-              比分: {match.home_score} - {match.away_score}
+            <span className="text-white font-bold text-sm">
+              {match.home_score} - {match.away_score}
             </span>
           )}
         </div>
 
+        {/* Teams + score row */}
         <div className="flex items-center justify-between">
-          <div className="flex-1">
+          <div className="flex-1 text-center">
             <div className="text-lg font-semibold text-white">{match.home_team}</div>
-            <div className="text-lg font-semibold text-white">vs</div>
-            <div className="text-lg font-semibold text-white">{match.away_team}</div>
           </div>
 
-          <div className="text-right">
-            <div className="flex items-center gap-1.5 text-slate-400 text-sm mb-1">
-              <Calendar className="w-4 h-4" />
-              {format(new Date(match.match_date), 'MM/dd HH:mm', { locale: zhCN })}
-            </div>
-            {match.status === 'pending' && (
-              <div className={`flex items-center gap-1.5 text-sm ${isDeadlinePassed ? 'text-red-400' : 'text-amber-400'}`}>
-                <Clock className="w-4 h-4" />
-                {isDeadlinePassed ? '已截止' : `截止 ${format(new Date(match.deadline), 'MM/dd HH:mm', { locale: zhCN })}`}
+          {match.status === 'finished' && match.home_score != null ? (
+            <div className="text-center px-4">
+              <div className="text-2xl font-bold text-white">
+                {match.home_score} - {match.away_score}
               </div>
-            )}
+            </div>
+          ) : (
+            <div className="text-2xl font-bold text-slate-600 px-4">vs</div>
+          )}
+
+          <div className="flex-1 text-center">
+            <div className="text-lg font-semibold text-white">{match.away_team}</div>
           </div>
+        </div>
+
+        {/* Date row */}
+        <div className="flex items-center justify-end mt-3">
+          <div className="flex items-center gap-1.5 text-slate-400 text-sm">
+            <Calendar className="w-4 h-4" />
+            {format(new Date(match.match_date), 'MM/dd HH:mm', { locale: zhCN })}
+          </div>
+          {match.status === 'pending' && (
+            <span className={`ml-3 flex items-center gap-1.5 text-sm ${isDeadlinePassed ? 'text-red-400' : 'text-amber-400'}`}>
+              <Clock className="w-4 h-4" />
+              {isDeadlinePassed ? '已截止' : `截止 ${format(new Date(match.deadline), 'MM/dd HH:mm', { locale: zhCN })}`}
+            </span>
+          )}
         </div>
 
         {canPredict && (
