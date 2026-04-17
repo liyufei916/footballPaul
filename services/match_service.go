@@ -97,11 +97,6 @@ func (s *MatchService) UpdateMatchResult(matchID uint, homeScore, awayScore int)
 		return errors.New("比赛尚未开始，无法录入结果")
 	}
 
-	// 已结束的比赛不允许重复录入
-	if match.Status == models.MatchStatusFinished {
-		return errors.New("match already finished")
-	}
-
 	tx := database.DB.Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -133,6 +128,7 @@ func (s *MatchService) UpdateMatchResult(matchID uint, homeScore, awayScore int)
 
 	return nil
 }
+
 
 func (s *MatchService) UpdateMatchStatus(matchID uint, status models.MatchStatus) error {
 	result := database.DB.Model(&models.Match{}).Where("id = ?", matchID).Update("status", status)
