@@ -42,6 +42,8 @@ func (s *MatchService) GetMatchByID(id uint) (*models.Match, error) {
 		}
 		return nil, result.Error
 	}
+	// 动态计算状态
+	match.Status = match.EffectiveStatus()
 	return &match, nil
 }
 
@@ -49,8 +51,18 @@ func (s *MatchService) GetMatches(status models.MatchStatus, competitionID uint,
 	var matches []models.Match
 	query := database.DB.Preload("Competition")
 
-	if status != "" {
-		query = query.Where("status = ?", status)
+	// 根据动态状态过滤：
+	// - pending: match_date > now AND 未录比分
+	// - ongoing: match_date <= now AND 未录比分
+	// - finished: 已录比分（home_score IS NOT NULL）
+	now := time.Now()
+	switch status {
+	case models.MatchStatusPending:
+		query = query.Where("match_date > ? AND home_score IS NULL", now)
+	case models.MatchStatusOngoing:
+		query = query.Where("match_date <= ? AND home_score IS NULL", now)
+	case models.MatchStatusFinished:
+		query = query.Where("home_score IS NOT NULL")
 	}
 
 	if competitionID > 0 {
@@ -66,6 +78,11 @@ func (s *MatchService) GetMatches(status models.MatchStatus, competitionID uint,
 		return nil, result.Error
 	}
 
+	// 动态计算每个比赛的状态
+	for i := range matches {
+		matches[i].Status = matches[i].EffectiveStatus()
+	}
+
 	return matches, nil
 }
 
@@ -75,6 +92,12 @@ func (s *MatchService) UpdateMatchResult(matchID uint, homeScore, awayScore int)
 		return err
 	}
 
+	// 必须比赛已开始才能录入结果（不允许赛前录入假结果）
+	if !match.HasStarted() {
+		return errors.New("比赛尚未开始，无法录入结果")
+	}
+
+	// 已结束的比赛不允许重复录入
 	if match.Status == models.MatchStatusFinished {
 		return errors.New("match already finished")
 	}
