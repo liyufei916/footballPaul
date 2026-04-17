@@ -97,6 +97,10 @@ footballPaul/
 
 **认证**: 基于 JWT（`middleware/auth.go`）。受保护的路由使用 `middleware.AuthMiddleware(cfg)`。
 
+**API 认证路由**:
+- `POST /api/auth/register` - 注册用户（需提供 username, email, password）
+- `POST /api/auth/login` - 登录获取 JWT token（需提供 email, password）
+
 **配置**: 通过 `config/config.go` 读取环境变量 - DB_DSN（数据库路径）, SERVER_PORT, JWT_SECRET。
 
 ## 测试
