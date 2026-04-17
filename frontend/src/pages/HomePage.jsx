@@ -42,9 +42,6 @@ export default function HomePage() {
       const comps = response.data.competitions || [];
       setCompetitions(comps);
       // Auto-select first competition if available
-      if (comps.length > 0 && !selectedCompetition) {
-        setSelectedCompetition(comps[0]);
-      }
     } catch (err) {
       console.error('Failed to fetch competitions:', err);
     } finally {
