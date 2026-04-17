@@ -43,10 +43,13 @@ func (h *PredictionHandler) CreatePrediction(c *gin.Context) {
 		return
 	}
 
+	// 重新查询以获取完整关联数据
+	prediction, _ = h.predictionService.GetPredictionByID(prediction.ID)
+
 	c.JSON(http.StatusCreated, gin.H{
-		"success":       true,
-		"prediction_id": prediction.ID,
-		"message":       "预测提交成功",
+		"success":    true,
+		"prediction": prediction,
+		"message":    "预测提交成功",
 	})
 }
 
@@ -80,6 +83,15 @@ func (h *PredictionHandler) UpdatePrediction(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	// 验证请求中的 match_id 与预测记录一致（防止误传数据）
+	if req.MatchID > 0 && prediction.MatchID != req.MatchID {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "match_id mismatch"})
+		return
+	}
+
+	// 重新查询以获取完整关联数据（User、Match、Competition）
+	prediction, _ = h.predictionService.GetPredictionByID(prediction.ID)
 
 	c.JSON(http.StatusOK, gin.H{
 		"success":    true,
@@ -118,7 +130,8 @@ func (h *PredictionHandler) GetMatchPredictions(c *gin.Context) {
 		return
 	}
 
-	predictions, err := h.predictionService.GetMatchPredictions(uint(matchID), false)
+	// 需要同时加载 User 和 Match+Competition 信息
+	predictions, err := h.predictionService.GetMatchPredictionsWithUsers(uint(matchID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

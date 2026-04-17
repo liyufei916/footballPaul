@@ -24,7 +24,7 @@ func (s *LeaderboardService) GetLeaderboard(competitionID uint, limit int) ([]Le
 		UserID           uint  `gorm:"column:id"`
 		Username         string `gorm:"column:username"`
 		TotalPoints      int    `gorm:"column:total_points"`
-		PredictionsCount  int64  `gorm:"column:predictions_count"`
+		PredictionsCount int64  `gorm:"column:predictions_count"`
 	}
 
 	var results []userWithStats
@@ -34,13 +34,14 @@ func (s *LeaderboardService) GetLeaderboard(competitionID uint, limit int) ([]Le
 		subQuery := database.DB.Model(&models.Prediction{}).
 			Select("predictions.user_id, COUNT(*) as predictions_count, COALESCE(SUM(predictions.points_earned), 0) as total_points").
 			Joins("JOIN matches ON predictions.match_id = matches.id").
-			Where("matches.competition_id = ? AND predictions.is_scored = ?", competitionID, true).
+			Where("matches.competition_id = ?", competitionID).
 			Group("predictions.user_id")
 
+		// 使用 LEFT JOIN 确保显示所有有预测的用户，即使没有被评分的预测也显示
 		query := database.DB.Table("users").
 			Select("users.id, users.username, COALESCE(sq.total_points, 0) as total_points, COALESCE(sq.predictions_count, 0) as predictions_count").
 			Joins("LEFT JOIN (?) as sq ON users.id = sq.user_id", subQuery).
-			Where("sq.predictions_count > 0").
+			Where("COALESCE(sq.predictions_count, 0) > 0").
 			Order("sq.total_points DESC, users.id ASC")
 
 		if limit > 0 {
@@ -54,13 +55,13 @@ func (s *LeaderboardService) GetLeaderboard(competitionID uint, limit int) ([]Le
 		// Global leaderboard (all predictions)
 		subQuery := database.DB.Model(&models.Prediction{}).
 			Select("user_id, COUNT(*) as predictions_count, COALESCE(SUM(points_earned), 0) as total_points").
-			Where("is_scored = ?", true).
 			Group("user_id")
 
+		// 使用 LEFT JOIN + COALESCE 确保显示所有有预测的用户
 		query := database.DB.Table("users").
 			Select("users.id, users.username, COALESCE(sq.total_points, 0) as total_points, COALESCE(sq.predictions_count, 0) as predictions_count").
 			Joins("LEFT JOIN (?) as sq ON users.id = sq.user_id", subQuery).
-			Where("sq.predictions_count > 0").
+			Where("COALESCE(sq.predictions_count, 0) > 0").
 			Order("sq.total_points DESC, users.id ASC")
 
 		if limit > 0 {
@@ -99,7 +100,7 @@ func (s *LeaderboardService) GetUserRank(userID uint, competitionID uint) (int, 
 		subQuery := database.DB.Model(&models.Prediction{}).
 			Select("user_id, COALESCE(SUM(points_earned), 0) as total_points").
 			Joins("JOIN matches ON predictions.match_id = matches.id").
-			Where("matches.competition_id = ? AND predictions.is_scored = ?", competitionID, true).
+			Where("matches.competition_id = ?", competitionID).
 			Group("predictions.user_id").
 			Having("user_id = ?", userID)
 
@@ -116,7 +117,7 @@ func (s *LeaderboardService) GetUserRank(userID uint, competitionID uint) (int, 
 		subQueryHigher := database.DB.Model(&models.Prediction{}).
 			Select("user_id, COALESCE(SUM(points_earned), 0) as total_points").
 			Joins("JOIN matches ON predictions.match_id = matches.id").
-			Where("matches.competition_id = ? AND predictions.is_scored = ?", competitionID, true).
+			Where("matches.competition_id = ?", competitionID).
 			Group("predictions.user_id").
 			Having("COALESCE(SUM(points_earned), 0) > ?", currentUser.TotalPoints)
 
@@ -132,7 +133,7 @@ func (s *LeaderboardService) GetUserRank(userID uint, competitionID uint) (int, 
 		// Global rank
 		if err := database.DB.Table("users").
 			Select("users.id, COALESCE(sq.total_points, 0) as total_points").
-			Joins("LEFT JOIN (SELECT user_id, COALESCE(SUM(points_earned), 0) as total_points FROM predictions WHERE is_scored = true GROUP BY user_id) as sq ON users.id = sq.user_id").
+			Joins("LEFT JOIN (SELECT user_id, COALESCE(SUM(points_earned), 0) as total_points FROM predictions GROUP BY user_id) as sq ON users.id = sq.user_id").
 			Where("users.id = ?", userID).
 			Scan(&currentUser).Error; err != nil {
 			return 0, err
@@ -140,7 +141,7 @@ func (s *LeaderboardService) GetUserRank(userID uint, competitionID uint) (int, 
 
 		var rank int64
 		if err := database.DB.Model(&models.User{}).
-			Joins("LEFT JOIN (SELECT user_id, COALESCE(SUM(points_earned), 0) as total_points FROM predictions WHERE is_scored = true GROUP BY user_id) as sq ON users.id = sq.user_id").
+			Joins("LEFT JOIN (SELECT user_id, COALESCE(SUM(points_earned), 0) as total_points FROM predictions GROUP BY user_id) as sq ON users.id = sq.user_id").
 			Where("COALESCE(sq.total_points, 0) > ?", currentUser.TotalPoints).
 			Count(&rank).Error; err != nil {
 			return 0, err
@@ -161,7 +162,7 @@ func (s *LeaderboardService) GetUserPointsByCompetition(userID uint) (map[uint]i
 	if err := database.DB.Model(&models.Prediction{}).
 		Select("matches.competition_id, COALESCE(SUM(predictions.points_earned), 0) as total_points").
 		Joins("JOIN matches ON predictions.match_id = matches.id").
-		Where("predictions.user_id = ? AND predictions.is_scored = ?", userID, true).
+		Where("predictions.user_id = ?", userID).
 		Group("matches.competition_id").
 		Scan(&results).Error; err != nil {
 		return nil, err

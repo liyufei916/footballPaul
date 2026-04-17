@@ -2,13 +2,15 @@ package models
 
 import (
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type MatchStatus string
 
 const (
 	MatchStatusPending  MatchStatus = "pending"
-	MatchStatusOngoing  MatchStatus = "ongoing"
+	MatchStatusOngoing MatchStatus = "ongoing"
 	MatchStatusFinished MatchStatus = "finished"
 )
 
@@ -32,4 +34,10 @@ type Match struct {
 type MatchResult struct {
 	HomeScore int `json:"home_score" binding:"required,min=0"`
 	AwayScore int `json:"away_score" binding:"required,min=0"`
+}
+
+// AfterCreate 创建比赛后自动更新赛事的 match_count
+func (m *Match) AfterCreate(tx *gorm.DB) error {
+	return tx.Model(&Competition{}).Where("id = ?", m.CompetitionID).
+		UpdateColumn("match_count", gorm.Expr("match_count + 1")).Error
 }

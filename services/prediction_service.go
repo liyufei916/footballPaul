@@ -123,9 +123,23 @@ func (s *PredictionService) GetMatchPredictions(matchID uint, includeUser bool) 
 	return predictions, nil
 }
 
+// GetMatchPredictionsWithUsers 查询比赛的所有预测，并加载用户和比赛信息
+func (s *PredictionService) GetMatchPredictionsWithUsers(matchID uint) ([]models.Prediction, error) {
+	var predictions []models.Prediction
+	result := database.DB.Where("match_id = ?", matchID).
+		Preload("User").
+		Preload("Match").
+		Preload("Match.Competition").
+		Find(&predictions)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return predictions, nil
+}
+
 func (s *PredictionService) GetPredictionByID(id uint) (*models.Prediction, error) {
 	var prediction models.Prediction
-	result := database.DB.Preload("Match").Preload("User").First(&prediction, id)
+	result := database.DB.Preload("User").Preload("Match").Preload("Match.Competition").First(&prediction, id)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, errors.New("prediction not found")

@@ -45,7 +45,7 @@ FootballPaul 是一个交互式的足球比赛预测平台，用户可以：
 | 完全正确 | 10分 | 比分完全一致 | 预测2:1，实际2:1 |
 | 猜中胜负+净胜球 | 7分 | 结果和净胜球都正确 | 预测2:0，实际3:1（净胜2球） |
 | 猜中胜负 | 5分 | 只猜中胜/平/负 | 预测2:1，实际3:2（都是主胜） |
-| 猜中一方得分 | 3分 | 猜中任一队伍得分 | 预测2:1，实际2:3（主队得2分） |
+| 猜中一方得分 | 3分 | 预测结果错误，但某队比分猜对 | 预测2:1，实际2:3（主队得分相同，但结果主队输） |
 | 其他 | 0分 | 预测不准确 | - |
 
 ### 评分逻辑示例
@@ -190,6 +190,44 @@ footballPaul/
 - 个人数据分析
 
 ## 📡 API 接口
+
+### 用户认证接口
+
+**注册用户**
+```http
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "username": "player1",
+  "email": "player1@example.com",
+  "password": "password123"
+}
+
+Response:
+{
+  "success": true,
+  "user": {"id": 1, "username": "player1", "email": "player1@example.com", "total_points": 0}
+}
+```
+
+**登录**
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "player1@example.com",
+  "password": "password123"
+}
+
+Response:
+{
+  "success": true,
+  "token": "eyJhbGc...",
+  "user": {"id": 1, "username": "player1", "email": "player1@example.com", "total_points": 0}
+}
+```
 
 ### 用户预测接口
 
