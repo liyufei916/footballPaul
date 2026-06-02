@@ -32,8 +32,8 @@ type Match struct {
 }
 
 type MatchResult struct {
-	HomeScore int `json:"home_score" binding:"required,min=0"`
-	AwayScore int `json:"away_score" binding:"required,min=0"`
+	HomeScore int `json:"home_score" binding:"min=0"`
+	AwayScore int `json:"away_score" binding:"min=0"`
 }
 
 // EffectiveStatus 根据当前时间和比分录入情况，动态计算比赛状态
