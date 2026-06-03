@@ -56,14 +56,24 @@ func (s *CompetitionService) DeleteCompetition(competitionID uint) error {
 		}
 	}()
 
-	// 1. Get all matches of this competition (for cascade prediction cleanup)
+	// Verify competition exists
+	var competition models.Competition
+	if err := tx.First(&competition, competitionID).Error; err != nil {
+		tx.Rollback()
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("赛事不存在")
+		}
+		return err
+	}
+
+	// Get all match IDs of this competition
 	var matchIDs []uint
 	if err := tx.Model(&models.Match{}).Where("competition_id = ?", competitionID).Pluck("id", &matchIDs).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	// 2. Delete predictions for all matches of this competition
+	// Delete predictions for all matches of this competition
 	if len(matchIDs) > 0 {
 		if err := tx.Where("match_id IN ?", matchIDs).Delete(&models.Prediction{}).Error; err != nil {
 			tx.Rollback()
@@ -71,19 +81,19 @@ func (s *CompetitionService) DeleteCompetition(competitionID uint) error {
 		}
 	}
 
-	// 3. Delete all matches of this competition
+	// Delete all matches of this competition
 	if err := tx.Where("competition_id = ?", competitionID).Delete(&models.Match{}).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	// 4. Delete GroupCompetition entries for this competition
+	// Delete GroupCompetition entries for this competition
 	if err := tx.Where("competition_id = ?", competitionID).Delete(&models.GroupCompetition{}).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	// 5. Delete the competition
+	// Delete the competition
 	if err := tx.Delete(&models.Competition{}, competitionID).Error; err != nil {
 		tx.Rollback()
 		return err
