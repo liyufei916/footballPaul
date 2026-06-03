@@ -56,13 +56,34 @@ func (s *CompetitionService) DeleteCompetition(competitionID uint) error {
 		}
 	}()
 
-	// Delete associated matches (and their predictions via cascade)
+	// 1. Get all matches of this competition (for cascade prediction cleanup)
+	var matchIDs []uint
+	if err := tx.Model(&models.Match{}).Where("competition_id = ?", competitionID).Pluck("id", &matchIDs).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// 2. Delete predictions for all matches of this competition
+	if len(matchIDs) > 0 {
+		if err := tx.Where("match_id IN ?", matchIDs).Delete(&models.Prediction{}).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	// 3. Delete all matches of this competition
 	if err := tx.Where("competition_id = ?", competitionID).Delete(&models.Match{}).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	// Delete the competition
+	// 4. Delete GroupCompetition entries for this competition
+	if err := tx.Where("competition_id = ?", competitionID).Delete(&models.GroupCompetition{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// 5. Delete the competition
 	if err := tx.Delete(&models.Competition{}, competitionID).Error; err != nil {
 		tx.Rollback()
 		return err

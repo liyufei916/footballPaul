@@ -51,10 +51,6 @@ func (s *MatchService) GetMatches(status models.MatchStatus, competitionID uint,
 	var matches []models.Match
 	query := database.DB.Preload("Competition")
 
-	// 根据动态状态过滤：
-	// - pending: match_date > now AND 未录比分
-	// - ongoing: match_date <= now AND 未录比分
-	// - finished: 已录比分（home_score IS NOT NULL）
 	now := time.Now()
 	switch status {
 	case models.MatchStatusPending:
@@ -78,7 +74,6 @@ func (s *MatchService) GetMatches(status models.MatchStatus, competitionID uint,
 		return nil, result.Error
 	}
 
-	// 动态计算每个比赛的状态
 	for i := range matches {
 		matches[i].Status = matches[i].EffectiveStatus()
 	}
@@ -92,7 +87,6 @@ func (s *MatchService) UpdateMatchResult(matchID uint, homeScore, awayScore int)
 		return err
 	}
 
-	// 必须比赛已开始才能录入结果（不允许赛前录入假结果）
 	if !match.HasStarted() {
 		return errors.New("比赛尚未开始，无法录入结果")
 	}
@@ -129,7 +123,6 @@ func (s *MatchService) UpdateMatchResult(matchID uint, homeScore, awayScore int)
 	return nil
 }
 
-
 func (s *MatchService) UpdateMatchStatus(matchID uint, status models.MatchStatus) error {
 	result := database.DB.Model(&models.Match{}).Where("id = ?", matchID).Update("status", status)
 	if result.Error != nil {
@@ -157,13 +150,13 @@ func (s *MatchService) DeleteMatch(matchID uint) error {
 		}
 	}()
 
-	// Delete associated predictions first
+	// 1. Delete all predictions for this match
 	if err := tx.Where("match_id = ?", matchID).Delete(&models.Prediction{}).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	// Delete the match
+	// 2. Delete the match
 	if err := tx.Delete(&models.Match{}, matchID).Error; err != nil {
 		tx.Rollback()
 		return err
