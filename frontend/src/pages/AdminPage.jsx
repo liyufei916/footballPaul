@@ -445,7 +445,7 @@ export default function AdminPage() {
                 <option value="">先选择赛事...</option>
                 {filteredPendingMatches.map((m) => (
                   <option key={m.id} value={m.id}>
-                    /** competition shown by filter **/{m.home_team} vs {m.away_team} ({format(new Date(m.match_date), 'MM/dd HH:mm', { locale: zhCN })})
+                    {m.home_team} vs {m.away_team} ({format(new Date(m.match_date), 'MM/dd HH:mm', { locale: zhCN })})
                   </option>
                 ))}
               </select>
