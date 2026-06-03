@@ -16,6 +16,10 @@ func NewMatchService() *MatchService {
 }
 
 func (s *MatchService) CreateMatch(competitionID uint, homeTeam, awayTeam string, matchDate, deadline time.Time) (*models.Match, error) {
+	if deadline.After(matchDate) {
+		return nil, errors.New("截止时间必须在比赛时间之前")
+	}
+
 	match := &models.Match{
 		CompetitionID: competitionID,
 		HomeTeam:      homeTeam,
@@ -42,7 +46,6 @@ func (s *MatchService) GetMatchByID(id uint) (*models.Match, error) {
 		}
 		return nil, result.Error
 	}
-	// 动态计算状态
 	match.Status = match.EffectiveStatus()
 	return &match, nil
 }
@@ -150,16 +153,20 @@ func (s *MatchService) DeleteMatch(matchID uint) error {
 		}
 	}()
 
-	// 1. Delete all predictions for this match
-	if err := tx.Where("match_id = ?", matchID).Delete(&models.Prediction{}).Error; err != nil {
+	result := tx.Where("match_id = ?", matchID).Delete(&models.Prediction{})
+	if result.Error != nil {
 		tx.Rollback()
-		return err
+		return result.Error
 	}
 
-	// 2. Delete the match
-	if err := tx.Delete(&models.Match{}, matchID).Error; err != nil {
+	deleteResult := tx.Delete(&models.Match{}, matchID)
+	if deleteResult.Error != nil {
 		tx.Rollback()
-		return err
+		return deleteResult.Error
+	}
+	if deleteResult.RowsAffected == 0 {
+		tx.Rollback()
+		return errors.New("比赛不存在")
 	}
 
 	return tx.Commit().Error
