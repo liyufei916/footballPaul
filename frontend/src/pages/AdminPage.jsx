@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getCompetitions, createMatch, enterResult, getMatches, createCompetition } from '../api/apiClient';
-import { Settings, Plus, Trophy, AlertCircle, CheckCircle, Edit2, Medal } from 'lucide-react';
+import { getCompetitions, createMatch, enterResult, getMatches, createCompetition, deleteCompetition, deleteMatch } from '../api/apiClient';
+import { Settings, Plus, Trophy, AlertCircle, CheckCircle, Edit2, Medal, Trash, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 
@@ -35,10 +35,35 @@ export default function AdminPage() {
 
   // Enter result form
   const [selectedMatch, setSelectedMatch] = useState('');
+  const [filterCompetition, setFilterCompetition] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // { type: 'match'|'competition', id, name }
   const [homeScore, setHomeScore] = useState('');
   const [awayScore, setAwayScore] = useState('');
   const [resultError, setResultError] = useState('');
   const [resultSuccess, setResultSuccess] = useState('');
+
+  // Delete competition
+  const handleDeleteCompetition = async (competition) => {
+    try {
+      await deleteCompetition(competition.id);
+      fetchCompetitions();
+      fetchMatches();
+      setDeleteConfirm(null);
+    } catch (err) {
+      alert(err.response?.data?.error || '删除失败');
+    }
+  };
+
+  // Delete match
+  const handleDeleteMatch = async (matchId) => {
+    try {
+      await deleteMatch(matchId);
+      fetchMatches();
+      setDeleteConfirm(null);
+    } catch (err) {
+      alert(err.response?.data?.error || '删除失败');
+    }
+  };
 
   useEffect(() => {
     fetchCompetitions();
@@ -169,7 +194,10 @@ export default function AdminPage() {
     setEditSuccess('');
   };
 
-  const pendingMatches = matches.filter((m) => m.status === 'pending');
+  const pendingMatches = matches.filter((m) => m.status === 'pending' || m.status === 'ongoing');
+  const filteredPendingMatches = filterCompetition
+    ? pendingMatches.filter((m) => m.competition_id === parseInt(filterCompetition))
+    : pendingMatches;
 
   if (!isAdmin) {
     return (
@@ -250,6 +278,30 @@ export default function AdminPage() {
           </form>
         </div>
 
+        {/* Manage Competitions */}
+        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Medal className="w-5 h-5 text-gold-500" />
+            <h2 className="text-lg font-semibold text-white">管理赛事</h2>
+          </div>
+          <div className="space-y-2">
+            {competitions.map((c) => (
+              <div key={c.id} className="flex items-center justify-between bg-slate-900 rounded-lg px-4 py-2">
+                <span className="text-white text-sm">{c.name}</span>
+                <button
+                  onClick={() => handleDeleteCompetition(c)}
+                  className="text-red-400 hover:text-red-300 p-1"
+                  title="删除赛事"
+                >
+                  <Trash className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Create Match */}
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
           <div className="flex items-center gap-2 mb-6">
@@ -370,15 +422,30 @@ export default function AdminPage() {
             <div>
               <label className="block text-slate-300 text-sm mb-1">选择比赛</label>
               <select
+                value={filterCompetition}
+                onChange={(e) => setFilterCompetition(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-pitch-500"
+              >
+                <option value="">全部赛事</option>
+                {competitions.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-slate-300 text-sm mb-1">选择比赛</label>
+              <select
                 value={selectedMatch}
                 onChange={(e) => setSelectedMatch(e.target.value)}
                 className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-pitch-500"
                 required
+
               >
-                <option value="">选择一场比赛...</option>
-                {pendingMatches.map((m) => (
+                <option value="">先选择赛事...</option>
+                {filteredPendingMatches.map((m) => (
                   <option key={m.id} value={m.id}>
-                    {m.competition?.name}: {m.home_team} vs {m.away_team} ({format(new Date(m.match_date), 'MM/dd HH:mm', { locale: zhCN })})
+                    /** competition shown by filter **/{m.home_team} vs {m.away_team} ({format(new Date(m.match_date), 'MM/dd HH:mm', { locale: zhCN })})
                   </option>
                 ))}
               </select>
@@ -469,6 +536,13 @@ export default function AdminPage() {
                           <Edit2 className="w-4 h-4" />
                         </button>
                       )}
+                      <button
+                        onClick={() => setDeleteConfirm({ type: 'match', id: m.id, name: `${m.home_team} vs ${m.away_team}` })}
+                        className="text-red-400 hover:text-red-300 p-1"
+                        title="删除比赛"
+                      >
+                        <Trash className="w-4 h-4" />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -477,6 +551,37 @@ export default function AdminPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirm Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <AlertCircle className="w-5 h-5 text-red-400" />
+              <h3 className="text-lg font-semibold text-white">确认删除</h3>
+            </div>
+            <p className="text-slate-300 text-sm mb-6">
+              {deleteConfirm.type === 'competition'
+                ? `确定删除赛事「${deleteConfirm.name}」？该赛事下所有比赛记录将一并清除，不可恢复。`
+                : `确定删除比赛「${deleteConfirm.name}」？所有预测记录将一并清除，不可恢复。`}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-medium py-2 rounded-lg transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={() => deleteConfirm.type === 'competition' ? handleDeleteCompetition({ id: deleteConfirm.id, name: deleteConfirm.name }) : handleDeleteMatch(deleteConfirm.id)}
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-2 rounded-lg transition-colors"
+              >
+                确认删除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Modal */}
       {editingMatch && (

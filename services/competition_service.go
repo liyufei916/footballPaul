@@ -47,3 +47,26 @@ func (s *CompetitionService) CreateCompetition(name, code, logo string) (*models
 	}
 	return competition, nil
 }
+
+func (s *CompetitionService) DeleteCompetition(competitionID uint) error {
+	tx := database.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Delete associated matches (and their predictions via cascade)
+	if err := tx.Where("competition_id = ?", competitionID).Delete(&models.Match{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Delete the competition
+	if err := tx.Delete(&models.Competition{}, competitionID).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
+}

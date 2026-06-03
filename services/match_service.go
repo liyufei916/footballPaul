@@ -148,3 +148,26 @@ func (s *MatchService) IsDeadlinePassed(matchID uint) (bool, error) {
 	}
 	return time.Now().After(match.Deadline), nil
 }
+
+func (s *MatchService) DeleteMatch(matchID uint) error {
+	tx := database.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Delete associated predictions first
+	if err := tx.Where("match_id = ?", matchID).Delete(&models.Prediction{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Delete the match
+	if err := tx.Delete(&models.Match{}, matchID).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
+}

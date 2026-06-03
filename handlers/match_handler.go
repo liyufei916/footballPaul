@@ -112,3 +112,22 @@ func (h *MatchHandler) UpdateMatchResult(c *gin.Context) {
 		"message": "比分已录入，评分完成",
 	})
 }
+
+func (h *MatchHandler) DeleteMatch(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid match id"})
+		return
+	}
+
+	if err := h.matchService.DeleteMatch(uint(id)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "比赛已删除",
+	})
+}
