@@ -1,22 +1,14 @@
 package utils
 
-type MatchResult string
-
 const (
-	HomeWin MatchResult = "home_win"
-	AwayWin MatchResult = "away_win"
-	Draw    MatchResult = "draw"
-)
-
-const (
-	PointsExactScore      = 10
-	PointsGoalDifference  = 7
-	PointsCorrectWinner   = 5
-	PointsOneScoreCorrect = 3
-	PointsIncorrect       = 0
+	PointsExactScore              = 10
+	PointsCorrectResultAndOneScore = 5 // 猜对胜平负且其中一方进球数正确
+	PointsCorrectResult           = 3 // 只猜对胜平负
+	PointsIncorrect               = 0
 )
 
 func CalculatePoints(predictedHome, predictedAway, actualHome, actualAway int) int {
+	// 规则1：比分完全准确，得10分
 	if predictedHome == actualHome && predictedAway == actualAway {
 		return PointsExactScore
 	}
@@ -25,34 +17,24 @@ func CalculatePoints(predictedHome, predictedAway, actualHome, actualAway int) i
 	actualResult := getMatchResult(actualHome, actualAway)
 
 	if predictedResult != actualResult {
-		if predictedHome == actualHome || predictedAway == actualAway {
-			return PointsOneScoreCorrect
-		}
+		// 规则4：胜平负猜错，得0分
 		return PointsIncorrect
 	}
 
-	predictedDiff := abs(predictedHome - predictedAway)
-	actualDiff := abs(actualHome - actualAway)
-
-	if predictedDiff == actualDiff {
-		return PointsGoalDifference
+	// 规则2：猜对胜平负，且其中一方进球数正确，得5分
+	if predictedHome == actualHome || predictedAway == actualAway {
+		return PointsCorrectResultAndOneScore
 	}
 
-	return PointsCorrectWinner
+	// 规则3：只猜对胜平负，但没猜对任何一方进球数，得3分
+	return PointsCorrectResult
 }
 
-func getMatchResult(homeScore, awayScore int) MatchResult {
+func getMatchResult(homeScore, awayScore int) string {
 	if homeScore > awayScore {
-		return HomeWin
+		return "home_win"
 	} else if homeScore < awayScore {
-		return AwayWin
+		return "away_win"
 	}
-	return Draw
-}
-
-func abs(n int) int {
-	if n < 0 {
-		return -n
-	}
-	return n
+	return "draw"
 }

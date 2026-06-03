@@ -41,7 +41,9 @@ export const createCompetition = (data) => api.post('/competitions', data);
 // Match APIs
 export const getMatches = (params) => api.get('/matches', { params });
 export const getMatch = (id) => api.get(`/matches/${id}`);
+export const deleteCompetition = (id) => api.delete(`/competitions/${id}`);
 export const createMatch = (data) => api.post('/matches', data);
+export const deleteMatch = (id) => api.delete(`/matches/${id}`);
 export const enterResult = (id, data) => api.put(`/matches/${id}/result`, data);
 
 // Prediction APIs
